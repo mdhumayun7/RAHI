@@ -146,3 +146,66 @@ class MemoryManager:
             )
             session.add(log)
             await session.commit()
+
+# ── Vector Search ─────────────────────────────────────────────────────────
+
+    async def save_memory_with_embedding(
+        self,
+        user_id: uuid.UUID,
+        content: str,
+        memory_type: str = "semantic",
+        importance: float = 0.5,
+    ) -> Memory:
+        """Save a memory AND generate+store its vector embedding."""
+        from memory.embeddings import embed_text
+
+        embedding = embed_text(content)
+
+        async with AsyncSessionLocal() as session:
+            memory = Memory(
+                user_id=user_id,
+                content=content,
+                embedding=embedding,
+                memory_type=memory_type,
+                importance=importance,
+            )
+            session.add(memory)
+            await session.commit()
+            await session.refresh(memory)
+            print(f"💾 Memory + embedding saved: {content[:50]}")
+            return memory
+
+    async def search_memories_semantic(
+        self,
+        user_id: uuid.UUID,
+        query: str,
+        limit: int = 5,
+        threshold: float = 0.3,
+    ) -> list[tuple[Memory, float]]:
+        """
+        Find memories semantically similar to a query.
+
+        Returns list of (Memory, similarity_score) tuples,
+        sorted by similarity (highest first).
+        """
+        from memory.embeddings import embed_text
+        from sqlalchemy import func
+
+        query_embedding = embed_text(query)
+
+        async with AsyncSessionLocal() as session:
+            # pgvector cosine distance operator: <=>
+            # cosine_similarity = 1 - cosine_distance
+            result = await session.execute(
+                select(
+                    Memory,
+                    (1 - Memory.embedding.cosine_distance(query_embedding)).label("similarity")
+                )
+                .where(Memory.user_id == user_id)
+                .where(Memory.embedding.is_not(None))
+                .order_by(Memory.embedding.cosine_distance(query_embedding))
+                .limit(limit)
+            )
+
+            rows = result.all()
+            return [(row[0], float(row[1])) for row in rows if float(row[1]) >= threshold]

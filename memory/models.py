@@ -52,7 +52,7 @@ class Memory(Base):
     id:          Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id:     Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     content:     Mapped[str]       = mapped_column(Text, nullable=False)
-    embedding:   Mapped[list]      = mapped_column(Vector(768), nullable=True)   # 768 = Gemini embedding dim
+    embedding:   Mapped[list]      = mapped_column(Vector(384), nullable=True)   # 384 = all-MiniLM-L6-v2
     memory_type: Mapped[str]       = mapped_column(String(50), default="semantic")
     importance:  Mapped[float]     = mapped_column(Float, default=0.5)
     created_at:  Mapped[datetime]  = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
