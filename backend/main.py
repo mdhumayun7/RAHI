@@ -42,6 +42,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"error": "Internal RAHI error", "detail": str(exc)}
+    )
+
 # Allow frontend (Next.js) to call this API
 app.add_middleware(
     CORSMiddleware,
