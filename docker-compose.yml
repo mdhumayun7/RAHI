@@ -1,0 +1,40 @@
+
+services:
+
+  # ─── PostgreSQL + pgvector ───────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg16        # Official pgvector image
+    container_name: rahi_postgres
+    environment:
+      POSTGRES_USER: rahi_user
+      POSTGRES_PASSWORD: rahi_pass
+      POSTGRES_DB: rahi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data  # Persist data across restarts
+      - ./memory/schemas:/docker-entrypoint-initdb.d  # Auto-run SQL on first start
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rahi_user -d rahi_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis (Working Memory Cache) ────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: rahi_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes   # Persist data to disk
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+  redisdata:
