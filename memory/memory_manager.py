@@ -209,3 +209,41 @@ class MemoryManager:
 
             rows = result.all()
             return [(row[0], float(row[1])) for row in rows if float(row[1]) >= threshold]
+        
+# ── Procedural Memory ─────────────────────────────────────────────────────
+
+    async def save_preference(
+        self,
+        user_id: uuid.UUID,
+        preference: str,
+        importance: float = 0.6,
+    ) -> Memory:
+        """
+        Save a learned user preference/behavior.
+        Example: "User prefers short bullet-point answers"
+                 "User always asks about Python, not JavaScript"
+        """
+        return await self.save_memory_with_embedding(
+            user_id=user_id,
+            content=preference,
+            memory_type="procedural",
+            importance=importance,
+        )
+
+    async def get_preferences(self, user_id: uuid.UUID) -> list[Memory]:
+        """Get all learned preferences for a user."""
+        return await self.get_all_memories(user_id, memory_type="procedural")
+
+    async def get_preferences_as_string(self, user_id: uuid.UUID) -> str:
+        """
+        Format preferences as a string for injecting into LLM system prompt.
+        Example output:
+          - User prefers concise answers
+          - User is a Python developer
+          - User is building an AI project called RAHI
+        """
+        prefs = await self.get_preferences(user_id)
+        if not prefs:
+            return "No specific preferences learned yet."
+        lines = [f"- {p.content}" for p in prefs]
+        return "\n".join(lines)
