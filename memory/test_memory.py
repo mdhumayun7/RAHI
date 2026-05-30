@@ -24,7 +24,7 @@ async def run_tests():
     print("\n--- Test 2: Create User ---")
     user = await manager.create_user(
         name="Humayun",
-        email="humayun@svnit.ac.in"
+       email=f"test_{int(__import__('time').time())}@rahi.com"
     )
     print(f"✅ User ID: {user.id}")
     print(f"✅ User Name: {user.name}")
