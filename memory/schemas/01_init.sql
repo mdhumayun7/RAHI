@@ -1,7 +1,7 @@
--- Enable the pgvector extension (must be first)
+-- Enable pgvector
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Users table
+-- Users
 CREATE TABLE IF NOT EXISTS users (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name        TEXT NOT NULL,
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     preferences JSONB DEFAULT '{}'
 );
 
--- Conversations table (episodic memory)
+-- Conversations (Episodic Memory)
 CREATE TABLE IF NOT EXISTS conversations (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -20,24 +20,24 @@ CREATE TABLE IF NOT EXISTS conversations (
     metadata    JSONB DEFAULT '{}'
 );
 
--- Memories table (semantic memory with vector embeddings)
+-- Memories (Semantic + Procedural)
 CREATE TABLE IF NOT EXISTS memories (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id     UUID REFERENCES users(id) ON DELETE CASCADE,
     content     TEXT NOT NULL,
-    embedding   vector(1536),              -- OpenAI ada-002 dimension
-    memory_type TEXT DEFAULT 'semantic',   -- semantic | episodic | procedural
+    embedding   vector(384),
+    memory_type TEXT DEFAULT 'semantic',
     importance  FLOAT DEFAULT 0.5,
     created_at  TIMESTAMPTZ DEFAULT NOW(),
     metadata    JSONB DEFAULT '{}'
 );
 
--- Index for fast vector similarity search
+-- Vector index
 CREATE INDEX IF NOT EXISTS memories_embedding_idx
     ON memories USING ivfflat (embedding vector_cosine_ops)
-    WITH (lists = 100);
+    WITH (lists = 10);
 
--- Audit log (every action RAHI takes is recorded here)
+-- Audit Log
 CREATE TABLE IF NOT EXISTS audit_log (
     id          BIGSERIAL PRIMARY KEY,
     user_id     UUID REFERENCES users(id),

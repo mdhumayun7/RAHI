@@ -21,6 +21,7 @@ engine  = ReActEngine(max_steps=6, verbose=False)  # Silent in API mode
 
 
 class ChatRequest(BaseModel):
+    model_config = {"str_max_length": 2000}
     user_id:    str
     session_id: str
     message:    str
