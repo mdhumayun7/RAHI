@@ -41,6 +41,8 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+from backend.middleware.auth import APIKeyMiddleware
+app.add_middleware(APIKeyMiddleware)
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -60,6 +62,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+from backend.middleware.auth import APIKeyMiddleware
+app.add_middleware(APIKeyMiddleware)
 
 # ── Register Routers ──────────────────────────────────────────────────────────
 app.include_router(health.router,  prefix="/health",  tags=["Health"])
@@ -74,4 +78,10 @@ async def root():
         "message": "RAHI is online",
         "version": "0.1.0",
         "docs":    "http://localhost:8000/docs"
-    }
+    }# RAHI Favicon
+from fastapi.responses import FileResponse
+from fastapi import Response
+
+@app.get("/favicon.ico")
+async def favicon():
+    return Response(status_code=204)
